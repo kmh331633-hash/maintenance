@@ -5,6 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>선광 설비 관리 통합</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCHWtPG64bUCx8wYQun767naxzQ2P46tS8",
+    authDomain: "maintenance-4b9ad.firebaseapp.com",
+    databaseURL: "https://maintenance-4b9ad-default-rtdb.firebaseio.com",
+    projectId: "maintenance-4b9ad",
+    storageBucket: "maintenance-4b9ad.firebasestorage.app",
+    messagingSenderId: "422302109224",
+    appId: "1:422302109224:web:3671635a80edfe69032f1d"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  window.firebaseDB = db;
+  window.firebaseRef = ref;
+  window.firebaseSet = set;
+  window.firebaseOnValue = onValue;
+  window._firebaseReady = true;
+  window.dispatchEvent(new Event('firebaseReady'));
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#f8f9fc;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#1a1a2e;font-size:13px}
@@ -148,6 +169,7 @@ footer{text-align:center;font-size:10px;color:#94a3b8;margin-top:24px;padding-bo
     <button class="main-tab" onclick="switchMainTab('maint',this)">🔧 설비 보수 이력 관리</button>
     <button class="main-tab" onclick="switchMainTab('analysis',this)">📈 종합 분석</button>
   </div>
+  <div id="syncStatus" style="font-size:11px;color:#94a3b8;padding-bottom:8px;white-space:nowrap;align-self:flex-end;padding-right:4px">⚪ 연결 중...</div>
 
   <!-- ══════════════════════════════════════
        PAGE 1: 설비 부동 관리
@@ -475,6 +497,7 @@ let RECORDS=[
 
 let currentChart=null;
 let currentView='설비별 최대 원인';
+let currentPage='bdong';
 
 function cleanName(n){return n.replace(/\s*\([^)]*강\)/g,'').replace(/\s*\([^)]*창고\)/g,'').trim();}
 
@@ -653,21 +676,33 @@ function addRecord(){
   document.getElementById('fHour').value='';
   document.getElementById('fCause').value='';
   renderBdongTable();renderView(currentView);autoSave();
-  refreshAllYearTabs();
+  syncAllTabs();
 }
 
 function deleteRecord(idx){
   if(!confirm('이 이력을 삭제하시겠습니까?'))return;
   RECORDS.splice(idx,1);renderBdongTable();renderView(currentView);autoSave();
+  syncAllTabs();
 }
+
+
+// ── Firebase 연결 상태 표시
+function updateSyncStatus(status){
+  const el=document.getElementById('syncStatus');
+  if(!el) return;
+  const map={online:'🟢 클라우드 연결됨', offline:'🔴 오프라인', saved:'✅ 저장 완료', syncing:'🔄 동기화 중...'};
+  el.textContent=map[status]||status;
+}
+window.addEventListener('online', ()=>updateSyncStatus('online'));
+window.addEventListener('offline', ()=>updateSyncStatus('offline'));
 
 // ══ 데이터 저장소 ══
 const STORAGE_KEY='선광설비관리_v1';
 const DEFAULT_BD_EQUIPS=['드라이어','시크너','리클레이머','탈수기','밀','쿨러','보일러'];
 const DEFAULT_MT_EQUIPS=['밀','탈수기','드라이어','쿨러','세라믹 필터','보일러','집진기 블로워 임펠러','시크너 용수펌프','조크러셔'];
 
-function saveFile(){
-  const data={
+function buildSaveData(){
+  return {
     RECORDS,
     MAINT_RECORDS,
     MAINT_COL_HEADERS,
@@ -676,14 +711,19 @@ function saveFile(){
     MAINT_COLORS_EXTRA:Object.fromEntries(Object.entries(MAINT_COLORS).filter(([k])=>!DEFAULT_MT_EQUIPS.includes(k))),
     MAINT_LIGHTS_EXTRA:Object.fromEntries(Object.entries(MAINT_LIGHTS).filter(([k])=>!DEFAULT_MT_EQUIPS.includes(k))),
   };
-  try{
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
-    showToast('💾 저장되었습니다');
-  }catch(e){
-    showToast('⚠️ 저장 실패 (저장 공간 부족)','error');
-  }
 }
 
+function saveFile(){
+  const data = buildSaveData();
+  try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }catch(e){}
+  if(window.firebaseDB){
+    window.firebaseSet(window.firebaseRef(window.firebaseDB,'equipData'), data)
+      .then(()=>{ showToast('☁️ 클라우드 저장 완료'); updateSyncStatus('saved'); })
+      .catch(()=>showToast('💾 로컬 저장됨','error'));
+  } else {
+    showToast('💾 저장되었습니다');
+  }
+}
 // 3초 디바운스 자동저장
 let _autoSaveTimer=null;
 function autoSave(){
@@ -691,28 +731,50 @@ function autoSave(){
   _autoSaveTimer=setTimeout(()=>saveFile(),3000);
 }
 
-function loadSavedData(){
-  try{
-    const saved=localStorage.getItem(STORAGE_KEY);
-    if(!saved)return;
-    const data=JSON.parse(saved);
-    if(data.RECORDS) RECORDS=data.RECORDS;
-    if(data.MAINT_RECORDS) MAINT_RECORDS=data.MAINT_RECORDS;
-    if(data.MAINT_COL_HEADERS) MAINT_COL_HEADERS=data.MAINT_COL_HEADERS;
-    if(data.EQUIP_META_EXTRA){
-      Object.entries(data.EQUIP_META_EXTRA).forEach(([k,v])=>{
-        EQUIP_META[k]=v; TAB_BG[k]=v.color;
-        const sel=document.getElementById('fEquip');
-        if(sel&&!Array.from(sel.options).find(o=>o.value===k))
-          sel.innerHTML+=`<option value="${k}">${k}</option>`;
-      });
-    }
-    if(data.MAINT_EQUIPS_EXTRA) data.MAINT_EQUIPS_EXTRA.forEach(n=>{if(!MAINT_EQUIPS.includes(n))MAINT_EQUIPS.push(n);});
-    if(data.MAINT_COLORS_EXTRA) Object.assign(MAINT_COLORS,data.MAINT_COLORS_EXTRA);
-    if(data.MAINT_LIGHTS_EXTRA) Object.assign(MAINT_LIGHTS,data.MAINT_LIGHTS_EXTRA);
-  }catch(e){console.warn('불러오기 실패:',e);}
+function applyData(data){
+  if(!data)return;
+  if(data.RECORDS) RECORDS=data.RECORDS;
+  if(data.MAINT_RECORDS) MAINT_RECORDS=data.MAINT_RECORDS;
+  if(data.MAINT_COL_HEADERS) MAINT_COL_HEADERS=data.MAINT_COL_HEADERS;
+  if(data.EQUIP_META_EXTRA){
+    Object.entries(data.EQUIP_META_EXTRA).forEach(([k,v])=>{
+      EQUIP_META[k]=v; TAB_BG[k]=v.color;
+      const sel=document.getElementById('fEquip');
+      if(sel&&!Array.from(sel.options).find(o=>o.value===k))
+        sel.innerHTML+=`<option value="${k}">${k}</option>`;
+    });
+  }
+  if(data.MAINT_EQUIPS_EXTRA) data.MAINT_EQUIPS_EXTRA.forEach(n=>{if(!MAINT_EQUIPS.includes(n))MAINT_EQUIPS.push(n);});
+  if(data.MAINT_COLORS_EXTRA) Object.assign(MAINT_COLORS,data.MAINT_COLORS_EXTRA);
+  if(data.MAINT_LIGHTS_EXTRA) Object.assign(MAINT_LIGHTS,data.MAINT_LIGHTS_EXTRA);
 }
 
+function loadSavedData(){
+  // localStorage 먼저 (빠른 초기 로드)
+  try{
+    const saved=localStorage.getItem(STORAGE_KEY);
+    if(saved) applyData(JSON.parse(saved));
+  }catch(e){}
+
+  // Firebase 실시간 연동
+  function connectFirebase(){
+    if(!window.firebaseDB) return;
+    updateSyncStatus('online');
+    const dbRef=window.firebaseRef(window.firebaseDB,'equipData');
+    window.firebaseOnValue(dbRef,snapshot=>{
+      const data=snapshot.val();
+      if(!data) return;
+      applyData(data);
+      try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}catch(e){}
+      refreshAllYearTabs();
+      buildSubTabs();
+      renderView(currentView);
+      showToast('🔄 최신 데이터 동기화됨');
+    });
+  }
+  if(window._firebaseReady){ connectFirebase(); }
+  else { window.addEventListener('firebaseReady',connectFirebase,{once:true}); }
+}
 function showToast(msg,type='save'){
   let t=document.getElementById('appToast');
   if(!t){
@@ -977,6 +1039,7 @@ function saveEdit(idx){
   buildMaintSidebar();
   renderMaintContent();
   autoSave();
+  syncAllTabs();
 }
 
 function cancelEdit(idx){
@@ -1013,6 +1076,7 @@ function addMaintRecord(){
   buildMaintSidebar();
   renderMaintContent();
   autoSave();
+  syncAllTabs();
   refreshAllYearTabs();
 }
 
@@ -1022,6 +1086,7 @@ function deleteMaintRecord(idx){
   buildMaintSidebar();
   renderMaintContent();
   autoSave();
+  syncAllTabs();
 }
 
 // ══ 메인 탭 전환 ══
@@ -1029,6 +1094,7 @@ function switchMainTab(page,btn){
   document.querySelectorAll('.main-tab').forEach(b=>{b.classList.remove('on');});
   btn.classList.add('on');
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('on');});
+  currentPage=page;
   if(page==='bdong'){
     document.getElementById('pageBdong').classList.add('on');
   }else if(page==='maint'){
@@ -1040,6 +1106,18 @@ function switchMainTab(page,btn){
   }
 }
 
+
+
+// ══ 전체 탭 동기화 헬퍼 ══
+// 데이터가 변경될 때마다 호출 — 열려있는 탭에 관계없이 모든 연동 갱신
+function syncAllTabs(){
+  refreshAllYearTabs();
+  updateYearLabels();
+  // 종합 분석 탭이 열려 있으면 즉시 갱신, 아니면 다음 진입 시 갱신됨
+  if(currentPage==='analysis') renderAnalysis();
+  // 부동 관리 탭 차트도 갱신
+  if(currentPage==='bdong') renderView(currentView);
+}
 
 // ══ 연도 탭 전체 갱신 (새 데이터 추가 시 호출) ══
 function refreshAllYearTabs(){
@@ -1668,6 +1746,7 @@ function addBdongEquip(){
   document.getElementById('newBdongEquip').value='';
   buildSubTabs();
   renderView(currentView);
+  syncAllTabs();
 }
 
 function addMaintEquip(){
@@ -1684,6 +1763,7 @@ function addMaintEquip(){
   currentMaintSub=null;currentMaintUnit=null;
   buildMaintSidebar();
   renderMaintContent();
+  syncAllTabs();
 }
 
 // ══ 보수이력 차트 ══
@@ -1814,6 +1894,7 @@ function ctxDelete(){
     if(currentView===ctxTarget) currentView='설비별 최대 원인';
     buildSubTabs();
     renderView(currentView);
+    syncAllTabs();
 
   }else if(ctxType==='maint'){
     const idx=MAINT_EQUIPS.indexOf(ctxTarget);
@@ -1830,6 +1911,7 @@ function ctxDelete(){
     buildMaintSidebar();
     if(currentMaintEquip) renderMaintContent();
     else document.getElementById('maintContent').innerHTML='<div class="empty-msg" style="padding:60px">등록된 설비가 없습니다</div>';
+    syncAllTabs();
   }
   ctxType=null; ctxTarget=null;
 }
