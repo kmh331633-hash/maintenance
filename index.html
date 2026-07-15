@@ -28,51 +28,112 @@
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#f8f9fc;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#1a1a2e;font-size:13px}
-.wrap{max-width:1060px;margin:0 auto;padding:24px 16px}
+body{background:#f0f2f5;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#1a1a2e;font-size:13px;display:flex;min-height:100vh}
 
-/* ── 최상단 메인 탭 ── */
-.main-tab-row{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid #e2e8f0}
-.main-tab{font-size:14px;font-weight:600;padding:12px 32px;cursor:pointer;color:#94a3b8;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none}
-.main-tab.on{color:#1C2B4A;border-bottom-color:#1C2B4A}
-.main-tab:hover{color:#475569}
+/* ── 좌측 사이드바 ── */
+.sidebar{width:64px;background:#1C2B4A;display:flex;flex-direction:column;align-items:center;padding:0;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:width .2s}
+.sidebar-logo{width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:#152238;flex-shrink:0}
+.sidebar-logo span{font-size:22px;font-weight:900;color:#fff;letter-spacing:-1px}
+.sidebar-nav{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;flex:1;width:100%}
+.nav-item{width:100%;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;cursor:pointer;color:#7B97C0;transition:all .15s;border:none;background:none;font-family:inherit}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.on{background:rgba(255,255,255,.12);color:#fff;border-right:3px solid #4A9EFF}
+.nav-item .nav-icon{font-size:18px;line-height:1}
+.nav-item .nav-label{font-size:9px;font-weight:500;letter-spacing:.3px}
+.sidebar-bottom{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;width:100%}
+.nav-item-bottom{width:100%;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;cursor:pointer;color:#7B97C0;transition:all .15s;border:none;background:none;font-family:inherit}
+.nav-item-bottom:hover{background:rgba(255,255,255,.07);color:#fff}
 
-.page{display:none}
-.page.on{display:block}
+/* ── 메인 영역 ── */
+.main-area{margin-left:64px;flex:1;display:flex;flex-direction:column;min-height:100vh}
 
-/* ── 공통 ── */
-.report-label{text-align:center;font-size:10px;letter-spacing:3px;color:#185FA5;margin-bottom:6px;font-weight:600}
-.page-title{text-align:center;font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:20px}
-.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
-.kpi-card{background:#fff;border-radius:10px;padding:14px 16px;text-align:center;border:1px solid #e2e8f0}
-.kpi-label{font-size:10px;color:#94a3b8;margin-bottom:6px;letter-spacing:1px;font-weight:500}
+/* ── 상단 헤더 ── */
+.top-header{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:99}
+.header-tabs{display:flex;gap:0;height:100%}
+.header-tab{font-size:13px;font-weight:500;padding:0 20px;cursor:pointer;color:#94a3b8;border:none;background:none;border-bottom:2px solid transparent;height:100%;display:flex;align-items:center;gap:6px;transition:all .15s;font-family:inherit}
+.header-tab.on{color:#1C2B4A;border-bottom-color:#1C2B4A;font-weight:600}
+.header-tab:hover{color:#475569}
+.header-right{display:flex;align-items:center;gap:12px}
+.sync-badge{font-size:11px;color:#0F6E56;display:flex;align-items:center;gap:5px;font-weight:500}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#0F6E56}
+
+/* ── 콘텐츠 + 우측 인사이트 ── */
+.content-layout{display:flex;flex:1;gap:0}
+.content-main{flex:1;padding:20px 20px;overflow-y:auto;max-width:calc(100% - 260px)}
+.insight-panel{width:260px;background:#fff;border-left:1px solid #e2e8f0;padding:16px 14px;overflow-y:auto;position:sticky;top:52px;height:calc(100vh - 52px)}
+
+/* ── 인사이트 패널 내용 ── */
+.insight-title{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:5px}
+.insight-card{background:#f8f9fc;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #f1f5f9}
+.insight-card-title{font-size:10px;color:#64748b;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.insight-card-val{font-size:20px;font-weight:700;color:#1C2B4A;margin-bottom:2px}
+.insight-card-sub{font-size:10px;display:flex;align-items:center;gap:4px}
+.trend-up{color:#A32D2D}
+.trend-down{color:#0F6E56}
+.insight-tip{background:#EEF2FF;border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #E0E7FF}
+.insight-tip-title{font-size:10px;font-weight:700;color:#4338CA;margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.insight-tip-text{font-size:11px;color:#3730A3;line-height:1.6}
+
+/* ── 페이지 헤더 ── */
+.page-header{margin-bottom:16px}
+.page-subtitle{font-size:10px;letter-spacing:2px;color:#185FA5;font-weight:600;margin-bottom:4px}
+.page-title{font-size:22px;font-weight:700;color:#1a1a2e}
+
+/* ── KPI 카드 ── */
+.kpi-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.kpi-card{background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #e2e8f0;display:flex;align-items:center;gap:12px}
+.kpi-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.kpi-body{}
+.kpi-label{font-size:10px;color:#94a3b8;margin-bottom:3px;font-weight:500}
 .kpi-val{font-size:22px;font-weight:700}
-.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid #e2e8f0}
-.section-title{font-size:13px;color:#475569;margin-bottom:4px;font-weight:600}
-.section-sub{font-size:11px;color:#94a3b8;margin-bottom:14px}
-.bar-list{display:flex;flex-direction:column;gap:10px}
-.bar-item{display:flex;flex-direction:column;gap:5px}
+
+/* ── 액션 버튼 영역 ── */
+.action-row{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}
+.btn-primary{font-size:12px;padding:8px 16px;border-radius:8px;background:#1C2B4A;color:#fff;border:none;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:5px}
+.btn-primary:hover{background:#263d63}
+.btn-secondary{font-size:12px;padding:8px 16px;border-radius:8px;background:#fff;color:#334155;border:1px solid #e2e8f0;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:5px}
+.btn-secondary:hover{background:#f8f9fc}
+
+/* ── 서브탭 ── */
+.sub-tab-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.sub-tab{font-size:11px;padding:5px 12px;border-radius:20px;background:#fff;color:#64748b;cursor:pointer;border:1px solid #e2e8f0;display:flex;align-items:center;gap:5px;transition:all .15s;font-weight:500}
+.sub-tab.on{color:#fff;border-color:transparent}
+.sub-tab-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+
+/* ── 카드 ── */
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid #e2e8f0}
+.section-title{font-size:13px;color:#1a1a2e;margin-bottom:2px;font-weight:600}
+.section-sub{font-size:11px;color:#94a3b8;margin-bottom:12px}
+
+/* ── 바 리스트 ── */
+.bar-list{display:flex;flex-direction:column;gap:8px}
+.bar-item{display:flex;flex-direction:column;gap:4px}
 .bar-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px}
 .bar-name{font-size:12px;color:#334155;font-weight:500}
-.bar-track{height:7px;background:#f1f5f9;border-radius:4px;overflow:hidden}
+.bar-track{height:6px;background:#f1f5f9;border-radius:4px;overflow:hidden}
 .bar-fill{height:100%;border-radius:4px}
-.panel-toggle{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}
-.btn-toggle{font-size:12px;padding:7px 16px;border-radius:8px;background:#1C2B4A;color:#fff;border:none;cursor:pointer;font-weight:500}
-.btn-toggle:hover{background:#263d63}
-.btn-save{font-size:12px;padding:7px 16px;border-radius:8px;background:#0F6E56;color:#fff;border:none;cursor:pointer;font-weight:500}
-.btn-save:hover{background:#085041}
-.input-panel{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:20px;display:none}
+
+/* ── 순위 테이블 ── */
+.rank-table{width:100%;border-collapse:collapse;font-size:12px}
+.rank-table thead th{background:#f8f9fc;color:#64748b;font-weight:600;padding:8px 10px;text-align:left;border-bottom:1px solid #f1f5f9}
+.rank-table tbody tr:hover{background:#f8fafd}
+.rank-table tbody td{padding:7px 10px;border-bottom:0.5px solid #f1f5f9;color:#334155;vertical-align:middle}
+.rank-num{font-size:11px;font-weight:700;color:#94a3b8;width:24px;text-align:center}
+.equip-dot{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:6px}
+
+/* ── 입력 패널 ── */
+.input-panel{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:16px;display:none}
 .input-panel.open{display:block}
-.input-title{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:16px}
-.form-grid{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:8px;align-items:end;margin-bottom:16px}
+.input-title{font-size:13px;font-weight:600;color:#1a1a2e;margin-bottom:14px}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr) auto;gap:8px;align-items:end;margin-bottom:14px}
 .form-group{display:flex;flex-direction:column;gap:4px}
 .form-label{font-size:10px;color:#64748b;font-weight:500}
 .form-input,.form-select{width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;color:#1a1a2e;background:#fff;outline:none}
 .form-input:focus,.form-select:focus{border-color:#185FA5}
-.btn-add{padding:8px 18px;background:#185FA5;color:#fff;border:none;border-radius:7px;font-size:12px;cursor:pointer;font-weight:500;white-space:nowrap;height:34px}
+.btn-add{padding:8px 16px;background:#185FA5;color:#fff;border:none;border-radius:7px;font-size:12px;cursor:pointer;font-weight:500;white-space:nowrap;height:34px}
 .btn-add:hover{background:#0C447C}
-.divider{border:none;border-top:1px solid #f1f5f9;margin:16px 0}
-.table-wrap{max-height:280px;overflow-y:auto;border-radius:8px;border:1px solid #f1f5f9}
+.divider{border:none;border-top:1px solid #f1f5f9;margin:14px 0}
+.table-wrap{max-height:260px;overflow-y:auto;border-radius:8px;border:1px solid #f1f5f9}
 table{width:100%;border-collapse:collapse;font-size:12px}
 thead th{background:#f8f9fc;color:#64748b;font-weight:500;padding:8px 10px;text-align:left;border-bottom:1px solid #f1f5f9;position:sticky;top:0}
 tbody tr:hover{background:#f8fafd}
@@ -80,208 +141,252 @@ tbody td{padding:7px 10px;border-bottom:1px solid #f8f9fc;color:#334155;vertical
 .equip-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px}
 .btn-del{font-size:11px;padding:2px 8px;border-radius:5px;background:#FCEBEB;color:#A32D2D;border:none;cursor:pointer}
 .btn-del:hover{background:#f7c1c1}
-.empty-msg{text-align:center;padding:24px;color:#94a3b8;font-size:12px}
 
-/* ── 부동관리 서브탭 ── */
-.sub-tab-row{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
-.sub-tab{font-size:11px;padding:5px 14px;border-radius:6px;background:#fff;color:#64748b;cursor:pointer;border:1px solid #e2e8f0;display:flex;align-items:center;gap:5px;transition:all .15s;font-weight:500}
-.sub-tab.on{color:#fff;border-color:transparent}
-.sub-tab-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+/* ── 설비 필터 탭 (부동 이력) ── */
+.filter-chip{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;font-weight:500;transition:all .15s}
+.filter-chip:hover{background:#f8f9fc}
 
 /* ── 보수이력 레이아웃 ── */
-.maint-layout{display:grid;grid-template-columns:220px 1fr;gap:16px;min-height:500px}
-.maint-sidebar{display:flex;flex-direction:column;gap:6px}
-.maint-equip-btn{padding:9px 14px;border-radius:8px;background:#fff;border:1px solid #e2e8f0;color:#334155;font-size:12px;font-weight:500;cursor:pointer;text-align:left;transition:all .15s}
+.maint-layout{display:grid;grid-template-columns:200px 1fr;gap:14px;min-height:400px}
+.maint-sidebar{display:flex;flex-direction:column;gap:5px}
+.maint-equip-btn{padding:8px 12px;border-radius:8px;background:#fff;border:1px solid #e2e8f0;color:#334155;font-size:12px;font-weight:500;cursor:pointer;text-align:left;transition:all .15s}
 .maint-equip-btn.on{background:#1C2B4A;color:#fff;border-color:#1C2B4A}
 .maint-equip-btn:hover:not(.on){background:#f8f9fc}
 .maint-content{flex:1}
-.maint-header{font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:4px}
-.maint-sub-header{font-size:11px;color:#94a3b8;margin-bottom:16px}
-
-/* ── 보수이력 세부탭 ── */
-.detail-tab-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.detail-tab{font-size:11px;padding:4px 12px;border-radius:6px;background:#fff;border:1px solid #e2e8f0;color:#64748b;cursor:pointer;font-weight:500;transition:all .15s}
+.maint-header{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:3px}
+.maint-sub-header{font-size:11px;color:#94a3b8;margin-bottom:14px}
+.detail-tab-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.detail-tab{font-size:11px;padding:4px 12px;border-radius:20px;background:#fff;border:1px solid #e2e8f0;color:#64748b;cursor:pointer;font-weight:500;transition:all .15s}
 .detail-tab.on{color:#fff;border-color:transparent}
-
-/* ── 보수이력 테이블 ── */
 .maint-table{width:100%;border-collapse:collapse;font-size:12px}
-.maint-table thead th{background:#f1f5f9;color:#475569;font-weight:600;padding:9px 12px;text-align:left;border-bottom:2px solid #e2e8f0}
+.maint-table thead th{background:#f1f5f9;color:#475569;font-weight:600;padding:8px 12px;text-align:left;border-bottom:1px solid #e2e8f0}
 .maint-table tbody tr{border-bottom:0.5px solid #f1f5f9;transition:background .1s}
 .maint-table tbody tr:hover{background:#f8fafd}
-.maint-table tbody td{padding:9px 12px;color:#334155;vertical-align:middle}
-.maint-table tbody td:first-child{font-weight:500;color:#1a1a2e}
-.days-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#E6F1FB;color:#185FA5;white-space:nowrap}
-.date-text{font-size:11px;color:#64748b;line-height:1.5}
-.date-chips{display:flex;flex-wrap:wrap;gap:4px}
-.date-chip{font-size:10px;color:#475569;background:#f1f5f9;border-radius:5px;padding:2px 7px;white-space:nowrap;line-height:1.6}
+.maint-table tbody td{padding:8px 12px;color:#334155;vertical-align:middle}
+.days-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.date-chips{display:flex;flex-wrap:wrap;gap:3px}
+.date-chip{font-size:10px;color:#475569;background:#f1f5f9;border-radius:5px;padding:1px 6px;white-space:nowrap}
 .maint-add-row{display:flex;justify-content:flex-end;margin-bottom:10px}
 .btn-maint-add{font-size:11px;padding:5px 14px;background:#185FA5;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:500}
-.btn-maint-add:hover{background:#0C447C}
 .maint-input-area{background:#f8f9fc;border-radius:10px;padding:14px;margin-bottom:14px;display:none;border:1px solid #e2e8f0}
 .maint-input-area.open{display:block}
 .maint-form-grid{display:grid;grid-template-columns:1fr 1fr 80px auto;gap:8px;align-items:end}
-.btn-maint-save{font-size:12px;padding:7px 16px;background:#0F6E56;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:500;height:34px}
-.btn-maint-del{font-size:11px;padding:2px 7px;border-radius:5px;background:#FCEBEB;color:#A32D2D;border:none;cursor:pointer}
 .btn-maint-edit{font-size:11px;padding:2px 8px;border-radius:5px;background:#E6F1FB;color:#185FA5;border:none;cursor:pointer;margin-right:3px}
 .btn-maint-edit:hover{background:#B5D4F4}
 .btn-maint-cancel{font-size:11px;padding:2px 8px;border-radius:5px;background:#F1EFE8;color:#5F5E5A;border:none;cursor:pointer;margin-right:3px}
 .btn-maint-ok{font-size:11px;padding:2px 8px;border-radius:5px;background:#EAF3DE;color:#27500A;border:none;cursor:pointer;margin-right:3px}
+.btn-maint-del{font-size:11px;padding:2px 7px;border-radius:5px;background:#FCEBEB;color:#A32D2D;border:none;cursor:pointer}
 .edit-input{width:100%;padding:4px 7px;border:1px solid #B5D4F4;border-radius:5px;font-size:12px;color:#1a1a2e;background:#fff;outline:none}
 .edit-input:focus{border-color:#185FA5}
 .editing-row td{background:#f0f7ff !important}
 .action-btns{display:flex;gap:2px;justify-content:flex-end;flex-wrap:nowrap}
+.btn-add-equip{font-size:11px;padding:5px 12px;border-radius:20px;background:#fff;color:#185FA5;border:1.5px dashed #B5D4F4;cursor:pointer;font-weight:500;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.btn-add-equip:hover{background:#E6F1FB}
 
-footer{text-align:center;font-size:10px;color:#94a3b8;margin-top:24px;padding-bottom:12px}
+/* ── 종합분석 ── */
+.maint-chart-section{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid #e2e8f0}
+.maint-chart-title{font-size:12px;font-weight:600;color:#475569;margin-bottom:10px}
+.maint-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.maint-kpi{background:#f8f9fc;border-radius:8px;padding:10px 12px;text-align:center;border:1px solid #f1f5f9}
+.maint-kpi-label{font-size:10px;color:#94a3b8;margin-bottom:4px}
+.maint-kpi-val{font-size:18px;font-weight:700}
 
+/* ── 모달 ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:999;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal-box{background:#fff;border-radius:14px;padding:24px;width:400px;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.modal-box{background:#fff;border-radius:14px;padding:24px;width:400px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.18)}
 .modal-title{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:16px}
 .modal-form{display:flex;flex-direction:column;gap:10px}
 .modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 .btn-modal-ok{padding:7px 20px;background:#185FA5;color:#fff;border:none;border-radius:7px;font-size:12px;cursor:pointer;font-weight:500}
 .btn-modal-cancel{padding:7px 16px;background:#f1f5f9;color:#64748b;border:none;border-radius:7px;font-size:12px;cursor:pointer}
-.btn-add-equip{font-size:11px;padding:5px 13px;border-radius:6px;background:#fff;color:#185FA5;border:1.5px dashed #B5D4F4;cursor:pointer;font-weight:500;white-space:nowrap;display:flex;align-items:center;gap:4px}
-.btn-add-equip:hover{background:#E6F1FB}
 
-/* ── 우클릭 컨텍스트 메뉴 ── */
-.ctx-menu{position:fixed;z-index:9999;background:#fff;border:1px solid #e2e8f0;border-radius:8px;
-  box-shadow:0 4px 16px rgba(0,0,0,.14);padding:4px 0;min-width:130px;display:none}
+/* ── 우클릭 메뉴 ── */
+.ctx-menu{position:fixed;z-index:9999;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);padding:4px 0;min-width:130px;display:none}
 .ctx-menu.open{display:block}
 .ctx-menu-item{padding:8px 16px;font-size:12px;cursor:pointer;color:#334155;display:flex;align-items:center;gap:7px}
 .ctx-menu-item:hover{background:#f8f9fc}
 .ctx-menu-item.danger{color:#A32D2D}
 .ctx-menu-item.danger:hover{background:#FCEBEB}
-.maint-chart-section{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid #e2e8f0}
-.maint-chart-title{font-size:12px;font-weight:600;color:#475569;margin-bottom:12px}
-.maint-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.maint-kpi{background:#f8f9fc;border-radius:8px;padding:10px 12px;text-align:center;border:1px solid #f1f5f9}
-.maint-kpi-label{font-size:10px;color:#94a3b8;margin-bottom:4px}
-.maint-kpi-val{font-size:18px;font-weight:700}
+
+/* ── 모바일 ── */
+@media(max-width:768px){
+  .sidebar{width:52px}
+  .main-area{margin-left:52px}
+  .insight-panel{display:none}
+  .content-main{max-width:100%;padding:12px 10px}
+  .kpi-row{grid-template-columns:1fr 1fr;gap:8px}
+  .maint-layout{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .form-grid button.btn-add{grid-column:1/-1}
+}
+
+footer{text-align:center;font-size:10px;color:#94a3b8;margin-top:16px;padding-bottom:16px}
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <!-- ══ 최상단 메인 탭 ══ -->
-  <div class="main-tab-row">
-    <button class="main-tab on" onclick="switchMainTab('bdong',this)">📊 설비 부동 관리</button>
-    <button class="main-tab" onclick="switchMainTab('maint',this)">🔧 설비 보수 이력 관리</button>
-    <button class="main-tab" onclick="switchMainTab('analysis',this)">📈 종합 분석</button>
+<!-- ══ 좌측 사이드바 ══ -->
+<div class="sidebar">
+  <div class="sidebar-logo"><span>M</span></div>
+  <nav class="sidebar-nav">
+    <button class="nav-item on" id="snav-bdong" onclick="switchMainTab('bdong',this)" title="부동 관리">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">부동 관리</span>
+    </button>
+    <button class="nav-item" id="snav-maint" onclick="switchMainTab('maint',this)" title="보수 이력">
+      <span class="nav-icon">🔧</span>
+      <span class="nav-label">보수 이력</span>
+    </button>
+    <button class="nav-item" id="snav-analysis" onclick="switchMainTab('analysis',this)" title="종합 분석">
+      <span class="nav-icon">📈</span>
+      <span class="nav-label">종합 분석</span>
+    </button>
+    <button class="nav-item" onclick="openModal('modalBdong')" title="설비 관리">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">설비 관리</span>
+    </button>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="nav-item-bottom" onclick="saveFile()" title="저장">
+      <span class="nav-icon" style="font-size:16px">💾</span>
+      <span class="nav-label" style="font-size:9px;color:#7B97C0">저장</span>
+    </button>
   </div>
-  <div id="syncStatus" style="font-size:11px;color:#94a3b8;padding-bottom:8px;white-space:nowrap;align-self:flex-end;padding-right:4px">⚪ 연결 중...</div>
-
-  <!-- ══════════════════════════════════════
-       PAGE 1: 설비 부동 관리
-  ══════════════════════════════════════ -->
-  <div id="pageBdong" class="page on">
-    <div class="report-label" id="labelBdong">2024–2026 ANNUAL MAINTENANCE REPORT</div>
-    <div class="page-title" id="titleBdong">선광 설비 부동 관리</div>
-
-    <div class="kpi-row">
-      <div class="kpi-card"><div class="kpi-label">총 부동시간</div><div class="kpi-val" style="color:#185FA5" id="kv1">-</div></div>
-      <div class="kpi-card"><div class="kpi-label">총 발생건수</div><div class="kpi-val" style="color:#0F6E56" id="kv2">-</div></div>
-      <div class="kpi-card"><div class="kpi-label">평균 건당 시간</div><div class="kpi-val" style="color:#BA7517" id="kv3">-</div></div>
-    </div>
-
-    <div class="panel-toggle">
-      <button class="btn-toggle" onclick="togglePanel()">＋ 부동 이력 추가 / 관리</button>
-      <button class="btn-save" onclick="saveFile()">💾 저장</button>
-    </div>
-
-    <div class="input-panel" id="inputPanel">
-      <div class="input-title">📋 부동 이력 입력</div>
-      <div class="form-grid">
-        <div class="form-group"><div class="form-label">일자</div><input class="form-input" type="text" id="fDate" placeholder="예: 26/06/22"></div>
-        <div class="form-group"><div class="form-label">설비</div>
-          <select class="form-select" id="fEquip">
-            <option>드라이어</option><option>시크너</option><option>리클레이머</option>
-            <option>탈수기</option><option>밀</option><option>쿨러</option><option>보일러</option>
-          </select>
-        </div>
-        <div class="form-group"><div class="form-label">부동시간 (h)</div><input class="form-input" type="number" id="fHour" step="0.1" min="0" placeholder="예: 2.5"></div>
-        <div class="form-group"><div class="form-label">부동내역</div><input class="form-input" type="text" id="fCause" placeholder="예: 점화 불량"></div>
-        <button class="btn-add" onclick="addRecord()">추가</button>
-      </div>
-      <hr class="divider">
-      <!-- 설비 필터 탭 -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="bdongFilterTabs"></div>
-      <div class="table-wrap">
-        <table><thead><tr>
-          <th style="width:80px">일자</th><th style="width:90px">설비</th>
-          <th style="width:80px">부동시간</th><th>부동내역</th><th style="width:50px">삭제</th>
-        </tr></thead><tbody id="recordTable"></tbody></table>
-      </div>
-    </div>
-
-    <div class="sub-tab-row" id="tabRow"></div>
-    <div id="mainView"></div>
-  </div>
-
-  <!-- ══════════════════════════════════════
-       PAGE 2: 설비 보수 이력 관리
-  ══════════════════════════════════════ -->
-  <div id="pageMaint" class="page">
-    <div class="report-label" id="labelMaint">2024–2026 MAINTENANCE HISTORY</div>
-    <div class="page-title">설비 보수 이력 관리</div>
-
-    <div class="maint-layout">
-      <!-- 좌측 설비 목록 -->
-      <div class="maint-sidebar" id="maintSidebar"></div>
-      <!-- 우측 내용 -->
-      <div class="maint-content" id="maintContent"></div>
-    </div>
-  </div>
-
-
-  <!-- ══════════════════════════════════════
-       PAGE 3: 종합 분석
-  ══════════════════════════════════════ -->
-  <div id="pageAnalysis" class="page">
-    <div class="report-label" id="labelAnalysis">COMPREHENSIVE ANALYSIS · 2024–2026</div>
-    <div class="page-title">설비 종합 분석</div>
-
-    <!-- 설비별 종합 현황 카드 -->
-    <div class="section-title" style="margin-bottom:4px">설비별 종합 현황</div>
-    <div class="section-sub">부동 + 보수 데이터 통합 비교 — 카드를 클릭하면 상세 분석으로 이동</div>
-    <div id="analysisCards" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px"></div>
-
-    <!-- ② 부동 vs 보수 버블차트 + ③ 월별 타임라인 -->
-    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:12px;margin-bottom:16px">
-      <div class="card">
-        <div class="section-title">설비별 부동 · 보수 비교</div>
-        <div class="section-sub">막대: 부동시간(h) · 꺾은선: 보수횟수(회)</div>
-        <div style="display:flex;gap:6px;margin-bottom:12px" id="hbarTabs">
-          <button class="detail-tab on" data-yr="all" onclick="switchHBarTab(this)" style="background:#1C2B4A;border-color:#1C2B4A;color:#fff">전체</button>
-        </div>
-        <div style="position:relative;height:260px"><canvas id="cHBar"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="section-title">월별 부동 + 보수 타임라인</div>
-        <div class="section-sub">막대: 부동시간(h) · 꺾은선: 보수건수</div>
-        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="timelineTabs">
-          <button class="detail-tab on" data-yr="all" onclick="switchTimelineTab(this)" style="background:#1C2B4A;border-color:#1C2B4A;color:#fff">전체</button>
-        </div>
-        <div style="position:relative;height:230px"><canvas id="cTimeline"></canvas></div>
-      </div>
-    </div>
-
-    <!-- ⑤ 보수 효과 분석 -->
-    <div class="card">
-      <div class="section-title">보수 효과 분석</div>
-      <div class="section-sub" id="effectSubtitle">평균 보수주기 대비 경과일 비교 — 정비 시점이 임박했는지 한눈에 확인 (24~26년 종합)</div>
-      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="effectTabs">
-        <button class="detail-tab on" data-mode="ratio" onclick="switchEffectTab(this)" style="background:#1C2B4A;border-color:#1C2B4A;color:#fff">주기 대비 비율</button>
-        <button class="detail-tab" data-mode="absolute" onclick="switchEffectTab(this)">경과일 절대순</button>
-        <button class="detail-tab" data-mode="byEquip" onclick="switchEffectTab(this)">설비별 그룹</button>
-      </div>
-      <div id="analysisEffect"></div>
-    </div>
-  </div>
-
-  <footer id="footerYear">선광 설비 관리 통합 시스템 · 2024–2026</footer>
 </div>
 
+<!-- ══ 메인 영역 ══ -->
+<div class="main-area">
+  <!-- 상단 헤더 탭 -->
+  <div class="top-header">
+    <div class="header-tabs">
+      <button class="header-tab on" data-page="bdong" onclick="switchMainTab('bdong',this)">📊 설비 부동 관리</button>
+      <button class="header-tab" data-page="maint" onclick="switchMainTab('maint',this)">🔧 설비 보수 이력 관리</button>
+      <button class="header-tab" data-page="analysis" onclick="switchMainTab('analysis',this)">📈 종합 분석</button>
+    </div>
+    <div class="header-right">
+      <div class="sync-badge" id="syncStatus">
+        <div class="sync-dot" style="background:#94a3b8"></div>
+        <span>연결 중...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 콘텐츠 + 인사이트 패널 -->
+  <div class="content-layout">
+    <div class="content-main">
+
+      <!-- PAGE 1: 설비 부동 관리 -->
+      <div id="pageBdong" class="page on">
+        <div class="page-header">
+          <div class="page-subtitle" id="labelBdong">2024–2026 ANNUAL MAINTENANCE REPORT</div>
+          <div class="page-title" id="titleBdong">선광 설비 부동 관리</div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#E6F1FB">🕐</div>
+            <div class="kpi-body"><div class="kpi-label">총 부동시간</div><div class="kpi-val" style="color:#185FA5" id="kv1">-</div></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#EAF3DE">📋</div>
+            <div class="kpi-body"><div class="kpi-label">총 발생건수</div><div class="kpi-val" style="color:#0F6E56" id="kv2">-</div></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#FAEEDA">⚡</div>
+            <div class="kpi-body"><div class="kpi-label">평균 건당 시간</div><div class="kpi-val" style="color:#BA7517" id="kv3">-</div></div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn-secondary" onclick="togglePanel()">＋ 부동 이력 추가 / 관리</button>
+          <button class="btn-primary" onclick="saveFile()">💾 저장</button>
+        </div>
+        <div class="input-panel" id="inputPanel">
+          <div class="input-title">📋 부동 이력 입력</div>
+          <div class="form-grid">
+            <div class="form-group"><div class="form-label">일자</div><input class="form-input" type="text" id="fDate" placeholder="예: 26/06/22"></div>
+            <div class="form-group"><div class="form-label">설비</div>
+              <select class="form-select" id="fEquip">
+                <option>드라이어</option><option>시크너</option><option>리클레이머</option>
+                <option>탈수기</option><option>밀</option><option>쿨러</option><option>보일러</option>
+              </select>
+            </div>
+            <div class="form-group"><div class="form-label">부동시간 (h)</div><input class="form-input" type="number" id="fHour" step="0.1" min="0" placeholder="예: 2.5"></div>
+            <div class="form-group"><div class="form-label">부동내역</div><input class="form-input" type="text" id="fCause" placeholder="예: 점화 불량"></div>
+            <button class="btn-add" onclick="addRecord()">추가</button>
+          </div>
+          <hr class="divider">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="bdongFilterTabs"></div>
+          <div class="table-wrap">
+            <table><thead><tr>
+              <th style="width:80px">일자</th><th style="width:90px">설비</th>
+              <th style="width:80px">부동시간</th><th>부동내역</th><th style="width:50px">삭제</th>
+            </tr></thead><tbody id="recordTable"></tbody></table>
+          </div>
+        </div>
+        <div class="sub-tab-row" id="tabRow"></div>
+        <div id="mainView"></div>
+      </div>
+
+      <!-- PAGE 2: 설비 보수 이력 관리 -->
+      <div id="pageMaint" class="page" style="display:none">
+        <div class="page-header">
+          <div class="page-subtitle" id="labelMaint">2024–2026 MAINTENANCE HISTORY</div>
+          <div class="page-title">설비 보수 이력 관리</div>
+        </div>
+        <div class="maint-layout">
+          <div class="maint-sidebar" id="maintSidebar"></div>
+          <div class="maint-content" id="maintContent"></div>
+        </div>
+      </div>
+
+      <!-- PAGE 3: 종합 분석 -->
+      <div id="pageAnalysis" class="page" style="display:none">
+        <div class="page-header">
+          <div class="page-subtitle" id="labelAnalysis">COMPREHENSIVE ANALYSIS · 2024–2026</div>
+          <div class="page-title">설비 종합 분석</div>
+        </div>
+        <div class="section-title" style="margin-bottom:4px">설비별 종합 현황</div>
+        <div class="section-sub">부동 + 보수 데이터 통합 비교 — 카드를 클릭하면 상세 분석으로 이동</div>
+        <div id="analysisCards" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px"></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:12px;margin-bottom:14px">
+          <div class="card">
+            <div class="section-title">설비별 부동 · 보수 비교</div>
+            <div class="section-sub">막대: 부동시간(h) · 꺾은선: 보수횟수(회)</div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="hbarTabs">
+              <button class="detail-tab on" data-yr="all" onclick="switchHBarTab(this)" style="background:#1C2B4A;border-color:#1C2B4A;color:#fff">전체</button>
+            </div>
+            <div style="position:relative;height:240px"><canvas id="cHBar"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="section-title">월별 부동 + 보수 타임라인</div>
+            <div class="section-sub">막대: 부동시간(h) · 꺾은선: 보수건수</div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="timelineTabs">
+              <button class="detail-tab on" data-yr="all" onclick="switchTimelineTab(this)" style="background:#1C2B4A;border-color:#1C2B4A;color:#fff">전체</button>
+            </div>
+            <div style="position:relative;height:200px"><canvas id="cTimeline"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">보수 효과 분석</div>
+          <div class="section-sub" id="effectSubtitle">평균 보수주기 대비 경과일 비교 — 정비 시점이 임박했는지 한눈에 확인</div>
+          <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap" id="effectTabs">
+            <button class="detail-tab on" data-mode="ratio" onclick="switchEffectTab(this)" style="background:#1C2B4A;border-color:#1C2B4A;color:#fff">주기 대비 비율</button>
+            <button class="detail-tab" data-mode="absolute" onclick="switchEffectTab(this)">경과일 절대순</button>
+            <button class="detail-tab" data-mode="byEquip" onclick="switchEffectTab(this)">설비별 그룹</button>
+          </div>
+          <div id="analysisEffect"></div>
+        </div>
+      </div>
+
+      <footer id="footerYear">선광 설비 관리 통합 시스템 · 2024–2026</footer>
+    </div><!-- /content-main -->
+
+    <!-- 우측 인사이트 패널 -->
+    <div class="insight-panel" id="insightPanel">
+      <div class="insight-title">💡 운영 인사이트</div>
+      <div id="insightContent"></div>
+    </div>
+  </div><!-- /content-layout -->
+</div><!-- /main-area -->
 
 <!-- 부동관리 설비 추가 모달 -->
 <div class="modal-overlay" id="modalBdong">
@@ -312,6 +417,8 @@ footer{text-align:center;font-size:10px;color:#94a3b8;margin-top:24px;padding-bo
     </div>
   </div>
 </div>
+<div class="ctx-menu" id="ctxMenu"><div class="ctx-menu-item danger" id="ctxDeleteBtn" onclick="ctxDelete()">🗑 설비 삭제</div></div>
+
 <script>
 // ══════════════════════════════════════════════
 // ① 부동 관리 데이터 & 로직
@@ -1091,21 +1198,28 @@ function deleteMaintRecord(idx){
 
 // ══ 메인 탭 전환 ══
 function switchMainTab(page,btn){
-  document.querySelectorAll('.main-tab').forEach(b=>{b.classList.remove('on');});
-  btn.classList.add('on');
-  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('on');});
+  // 헤더 탭
+  document.querySelectorAll('.header-tab').forEach(b=>{b.classList.remove('on');});
+  document.querySelectorAll(`.header-tab[data-page="${page}"]`).forEach(b=>b.classList.add('on'));
+  // 사이드바
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('on'));
+  const sn=document.getElementById('snav-'+page);
+  if(sn) sn.classList.add('on');
+  // 페이지
+  document.querySelectorAll('.page').forEach(p=>{p.style.display='none';});
   currentPage=page;
   if(page==='bdong'){
-    document.getElementById('pageBdong').classList.add('on');
+    document.getElementById('pageBdong').style.display='';
   }else if(page==='maint'){
-    document.getElementById('pageMaint').classList.add('on');
+    document.getElementById('pageMaint').style.display='';
     buildMaintSidebar();renderMaintContent();
   }else if(page==='analysis'){
-    document.getElementById('pageAnalysis').classList.add('on');
+    document.getElementById('pageAnalysis').style.display='';
     renderAnalysis();
   }
+  // 인사이트 패널 갱신
+  updateInsightPanel(page);
 }
-
 
 
 // ══ 전체 탭 동기화 헬퍼 ══
@@ -1147,6 +1261,69 @@ function updateYearLabels(){
   if(el3) el3.textContent = `COMPREHENSIVE ANALYSIS · ${range}`;
   if(el4) el4.textContent = '선광 설비 부동 관리';
   if(el5) el5.textContent = `선광 설비 관리 통합 시스템 · ${range}`;
+}
+
+
+// ══ 인사이트 패널 갱신 ══
+function updateInsightPanel(page){
+  const panel = document.getElementById('insightContent');
+  if(!panel) return;
+  const agg = aggregate();
+  const totalH = +RECORDS.reduce((s,r)=>s+r.hour,0).toFixed(1);
+  const totalCnt = RECORDS.length;
+
+  // 가장 위험한 설비 찾기
+  const worst = getEquipNames().map(n=>({n, h:agg[n]?.total||0})).sort((a,b)=>b.h-a.h)[0];
+  // 주기 초과 항목 수
+  const TODAY_ABS = parseAbsDay(getTodayDateStr());
+  let overdue = 0;
+  MAINT_RECORDS.forEach(mr=>{
+    const days=getMaintAbsDays(mr.dates).sort((a,b)=>a-b);
+    if(days.length<2) return;
+    const gaps=[];for(let i=1;i<days.length;i++)gaps.push(days[i]-days[i-1]);
+    const avg=Math.round(gaps.reduce((s,g)=>s+g,0)/gaps.length);
+    const elapsed=TODAY_ABS-Math.max(...days);
+    if(elapsed>avg) overdue++;
+  });
+
+  panel.innerHTML = `
+    ${worst?`<div class="insight-tip">
+      <div class="insight-tip-title">⚠️ 주의 설비</div>
+      <div class="insight-tip-text">${worst.n}의 부동시간이 ${worst.h.toFixed(1)}h로<br>가장 높습니다.<br>예방 정비 및 주요 부품 점검을 권장합니다.</div>
+    </div>`:''}
+    ${overdue>0?`<div class="insight-tip" style="background:#FFF7ED;border-color:#FED7AA">
+      <div class="insight-tip-title" style="color:#C2410C">🔔 정비 주기 초과</div>
+      <div class="insight-tip-text" style="color:#9A3412">${overdue}개 항목이 평균 보수주기를 초과했습니다. 종합 분석 탭에서 확인하세요.</div>
+    </div>`:''}
+    <div class="insight-card">
+      <div class="insight-card-title">🕐 총 부동시간</div>
+      <div class="insight-card-val" style="color:#185FA5">${totalH}h</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-card-title">📋 총 발생건수</div>
+      <div class="insight-card-val" style="color:#0F6E56">${totalCnt}건</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-card-title">🔧 총 보수 항목</div>
+      <div class="insight-card-val" style="color:#BA7517">${MAINT_RECORDS.length}건</div>
+    </div>
+    <div style="font-size:10px;color:#94a3b8;margin-top:8px;line-height:1.5">* 전년 대비: 2023-2025 기준</div>
+  `;
+}
+
+// syncStatus 업데이트
+function updateSyncStatus(status){
+  const el=document.getElementById('syncStatus');
+  if(!el)return;
+  const dot=el.querySelector('.sync-dot');
+  const span=el.querySelector('span');
+  if(status==='online'||status==='saved'){
+    if(dot){dot.style.background='#0F6E56';}
+    if(span) span.textContent= status==='saved'?'저장 완료':'클라우드 연결됨';
+  }else{
+    if(dot){dot.style.background='#A32D2D';}
+    if(span) span.textContent='오프라인';
+  }
 }
 
 // ══ 연도 동적 감지 ══
@@ -1929,6 +2106,7 @@ loadSavedData();
 buildSubTabs();
 renderView('설비별 최대 원인');
 updateYearLabels();
+updateInsightPanel('bdong');
 </script>
 
 <!-- 우클릭 컨텍스트 메뉴 -->
@@ -1961,5 +2139,6 @@ updateYearLabels();
     </div>
   </div>
 </div>
+
 </body>
 </html>
