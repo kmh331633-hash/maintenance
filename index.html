@@ -5,9 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>선광 설비 관리 통합</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<!-- ✅ 새로 바꿀 코드 -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  // 1. Firebase 로그인(Auth) 기능 모듈 추가
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyCHWtPG64bUCx8wYQun767naxzQ2P46tS8",
     authDomain: "maintenance-4b9ad.firebaseapp.com",
@@ -17,14 +21,89 @@
     messagingSenderId: "422302109224",
     appId: "1:422302109224:web:3671635a80edfe69032f1d"
   };
+
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const auth = getAuth(app);
+
   window.firebaseDB = db;
   window.firebaseRef = ref;
   window.firebaseSet = set;
   window.firebaseOnValue = onValue;
-  window._firebaseReady = true;
-  window.dispatchEvent(new Event('firebaseReady'));
+  window.firebaseAuth = auth;
+
+  // 2. 사용자가 접속했을 때 '로그인 상태'와 '관리자 승인 여부'를 실시간 감지하는 핵심 로직
+  onAuthStateChanged(auth, async (user) => {
+    const authOverlay = document.getElementById('authOverlay');
+    
+    if (user) {
+      // 로그인된 경우: DB에서 이 사람의 승인 상태(approved)를 가져옴
+      const userRef = ref(db, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+      const userData = snapshot.val();
+
+      if (userData && userData.approved === true) {
+        // [CASE A] 관리자가 승인한 회원 -> 로그인 창을 숨기고 메인 화면을 보여줌
+        if(authOverlay) authOverlay.style.display = 'none';
+        window._firebaseReady = true;
+        window.dispatchEvent(new Event('firebaseReady'));
+      } else {
+        // [CASE B] 아직 승인받지 못한 회원 -> 경고창 띄우고 자동 로그아웃
+        alert('관리자 승인 대기 중입니다.\n관리자가 승인(approved: true)한 후 이용하실 수 있습니다.');
+        await signOut(auth);
+        if(authOverlay) authOverlay.style.display = 'flex';
+      }
+    } else {
+      // [CASE C] 아예 로그인을 안 한 상태 -> 로그인 화면 띄우기
+      if(authOverlay) authOverlay.style.display = 'flex';
+    }
+  });
+
+  // 3. 회원가입 버튼 눌렀을 때 작동하는 함수
+  window.handleSignUp = async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const pw = document.getElementById('authPw').value.trim();
+    const name = document.getElementById('authName').value.trim();
+
+    if (!email || !pw || !name) { alert('이름, 이메일, 비밀번호를 모두 입력해 주세요.'); return; }
+
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, pw);
+      // DB에 사용자 정보 저장 (기본값: approved = false)
+      await set(ref(db, `users/${res.user.uid}`), {
+        name: name,
+        email: email,
+        approved: false, // 👈 승인 받기 전이라 false로 들어갑니다!
+        createdAt: new Date().toISOString()
+      });
+      alert('회원가입 신청이 완료되었습니다!\n관리자의 승인 후 로그인할 수 있습니다.');
+      await signOut(auth);
+    } catch (err) {
+      alert('회원가입 실패: ' + err.message);
+    }
+  };
+
+  // 4. 로그인 버튼 눌렀을 때 작동하는 함수
+  window.handleLogin = async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const pw = document.getElementById('authPw').value.trim();
+
+    if (!email || !pw) { alert('이메일과 비밀번호를 입력해 주세요.'); return; }
+
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch (err) {
+      alert('로그인 실패: 이메일 또는 비밀번호를 다시 확인해 주세요.');
+    }
+  };
+
+  // 5. 로그아웃 함수
+  window.handleLogout = async () => {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      await signOut(auth);
+      location.reload();
+    }
+  };
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -2139,6 +2218,34 @@ updateInsightPanel('bdong');
     </div>
   </div>
 </div>
+<!-- ══ 로그인 / 회원가입 화면 (비승인 상태일 때 메인화면을 완전히 가림) ══ -->
+<div id="authOverlay" style="position:fixed;inset:0;background:rgba(28,43,74,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:32px;width:380px;max-width:90vw;box-shadow:0 12px 32px rgba(0,0,0,0.3);">
+    <div style="text-align:center;margin-bottom:24px;">
+      <h2 style="font-size:20px;font-weight:700;color:#1C2B4A;margin-bottom:6px;">선광 설비 관리 시스템</h2>
+      <p style="font-size:12px;color:#64748b;">서비스 이용을 위해 로그인해 주세요</p>
+    </div>
 
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">이름 (회원가입 신청 시 필수)</label>
+        <input type="text" id="authName" placeholder="예: 홍길동" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">이메일 아이디</label>
+        <input type="email" id="authEmail" placeholder="example@company.com" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#475569;display:block;margin-bottom:4px;">비밀번호</label>
+        <input type="password" id="authPw" placeholder="••••••••" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="handleLogin()" style="flex:1;padding:12px;background:#1C2B4A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">로그인</button>
+        <button onclick="handleSignUp()" style="flex:1;padding:12px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">회원가입 신청</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
