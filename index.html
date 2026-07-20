@@ -41,6 +41,20 @@
   window.firebaseOnValue = onValue;
   window.firebaseAuth = auth;
 
+  // ── 저장된 이메일 불러오기 함수 ──
+  const loadSavedEmail = () => {
+    const savedEmail = localStorage.getItem('savedEmail');
+    const emailInput = document.getElementById('authEmail');
+    const rememberCb = document.getElementById('rememberEmail');
+    if (savedEmail && emailInput) {
+      emailInput.value = savedEmail;
+      if (rememberCb) rememberCb.checked = true;
+    }
+  };
+
+  // DOM 로드 시 저장된 이메일 자동 입력
+  window.addEventListener('DOMContentLoaded', loadSavedEmail);
+
   // ── 로그인 상태 변화 감지 ──
   onAuthStateChanged(auth, async (user) => {
     const authOverlay = document.getElementById('authOverlay');
@@ -57,9 +71,11 @@
         alert('관리자 승인 대기 중입니다. 관리자가 승인한 후 이용 가능합니다.');
         await signOut(auth);
         if(authOverlay) authOverlay.style.display = 'flex';
+        loadSavedEmail();
       }
     } else {
       if(authOverlay) authOverlay.style.display = 'flex';
+      loadSavedEmail();
     }
   });
 
@@ -90,11 +106,18 @@
   window.handleLogin = async () => {
     const email = document.getElementById('authEmail').value.trim();
     const pw = document.getElementById('authPw').value.trim();
+    const remember = document.getElementById('rememberEmail')?.checked;
 
     if (!email || !pw) { alert('이메일과 비밀번호를 입력해 주세요.'); return; }
 
     try {
       await signInWithEmailAndPassword(auth, email, pw);
+      // 이메일 저장 체크 여부 처리
+      if (remember) {
+        localStorage.setItem('savedEmail', email);
+      } else {
+        localStorage.removeItem('savedEmail');
+      }
     } catch (err) {
       alert('로그인 실패: 이메일 또는 비밀번호를 확인해 주세요.');
     }
@@ -1109,7 +1132,6 @@ function buildMaintSidebar(){
 
 function selectMaintEquip(name){
   currentMaintEquip=name;
-  // 첫번째 sub/unit 자동 선택
   const records=MAINT_RECORDS.filter(r=>r.equip===name);
   const subs=[...new Set(records.map(r=>r.sub).filter(Boolean))];
   currentMaintSub=subs.length?subs[0]:null;
@@ -1130,7 +1152,6 @@ function renderMaintContent(){
   let html=`<div class="maint-header" style="color:${color}">${currentMaintEquip}</div>
   <div class="maint-sub-header">보수 이력 · 2024–2026 · 총 ${records.length}건</div>`;
 
-  // sub 탭 (50만 로드밀 / 35만 로드밀 등)
   if(subs.length>1){
     if(!currentMaintSub) currentMaintSub=subs[0];
     html+=`<div class="detail-tab-row">
@@ -1143,7 +1164,6 @@ function renderMaintContent(){
   const subRecords=currentMaintSub?records.filter(r=>r.sub===currentMaintSub):records;
   const units=[...new Set(subRecords.map(r=>r.unit).filter(Boolean))];
 
-  // unit 탭 (1호 밀 / 2-1호 밀 등)
   if(units.length>1){
     if(!currentMaintUnit||!units.includes(currentMaintUnit)) currentMaintUnit=units[0];
     html+=`<div class="detail-tab-row">
@@ -1155,7 +1175,6 @@ function renderMaintContent(){
 
   const finalRecords=currentMaintUnit?subRecords.filter(r=>r.unit===currentMaintUnit):subRecords;
 
-  // 추가 버튼 & 입력폼
   html+=`<div class="maint-add-row">
     <button class="btn-maint-add" onclick="toggleMaintInput()">＋ 보수 이력 추가</button>
   </div>
@@ -1168,7 +1187,6 @@ function renderMaintContent(){
     </div>
   </div>`;
 
-  // 테이블
   if(finalRecords.length){
     html+=`<table class="maint-table" id="maintTable">
       <thead><tr>
@@ -1213,7 +1231,6 @@ function startEdit(idx){
     `<input class="edit-input" id="edit_dates_${idx}" value="${r.dates.replace(/"/g,'&quot;')}">`;
   document.getElementById(`mcell_days_${idx}`).innerHTML=
     `<input class="edit-input" type="number" id="edit_days_${idx}" value="${r.days}" min="1" style="width:54px;text-align:center" title="${MAINT_COL_HEADERS[2]}">`;
-  // 버튼 교체
   row.cells[3].innerHTML=`<div class="action-btns">
     <button class="btn-maint-ok" onclick="saveEdit(${idx})">✓ 저장</button>
     <button class="btn-maint-cancel" onclick="cancelEdit(${idx})">✕ 취소</button>
@@ -1283,14 +1300,11 @@ function deleteMaintRecord(idx){
 
 // ══ 메인 탭 전환 ══
 function switchMainTab(page,btn){
-  // 헤더 탭
   document.querySelectorAll('.header-tab').forEach(b=>{b.classList.remove('on');});
   document.querySelectorAll(`.header-tab[data-page="${page}"]`).forEach(b=>b.classList.add('on'));
-  // 사이드바
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('on'));
   const sn=document.getElementById('snav-'+page);
   if(sn) sn.classList.add('on');
-  // 페이지
   document.querySelectorAll('.page').forEach(p=>{p.style.display='none';});
   currentPage=page;
   if(page==='bdong'){
@@ -1302,30 +1316,22 @@ function switchMainTab(page,btn){
     document.getElementById('pageAnalysis').style.display='';
     renderAnalysis();
   }
-  // 인사이트 패널 갱신
   updateInsightPanel(page);
 }
 
-
-// ══ 전체 탭 동기화 헬퍼 ══
-// 데이터가 변경될 때마다 호출 — 열려있는 탭에 관계없이 모든 연동 갱신
 function syncAllTabs(){
   refreshAllYearTabs();
   updateYearLabels();
-  // 종합 분석 탭이 열려 있으면 즉시 갱신, 아니면 다음 진입 시 갱신됨
   if(currentPage==='analysis') renderAnalysis();
-  // 부동 관리 탭 차트도 갱신
   if(currentPage==='bdong') renderView(currentView);
 }
 
-// ══ 연도 탭 전체 갱신 (새 데이터 추가 시 호출) ══
 function refreshAllYearTabs(){
   buildYearTabs('timelineTabs', currentTimelineYear, 'switchTimelineTab');
   buildYearTabs('hbarTabs', currentHBarYear, 'switchHBarTab');
   updateYearLabels();
 }
 
-// ══ 연도 범위 동적 라벨 ══
 function getYearRange(){
   const years = getAllYears();
   if(!years.length) return '2024–2026';
@@ -1348,8 +1354,6 @@ function updateYearLabels(){
   if(el5) el5.textContent = `선광 설비 관리 통합 시스템 · ${range}`;
 }
 
-
-// ══ 인사이트 패널 갱신 ══
 function updateInsightPanel(page){
   const panel = document.getElementById('insightContent');
   if(!panel) return;
@@ -1357,9 +1361,7 @@ function updateInsightPanel(page){
   const totalH = +RECORDS.reduce((s,r)=>s+r.hour,0).toFixed(1);
   const totalCnt = RECORDS.length;
 
-  // 가장 위험한 설비 찾기
   const worst = getEquipNames().map(n=>({n, h:agg[n]?.total||0})).sort((a,b)=>b.h-a.h)[0];
-  // 주기 초과 항목 수
   const TODAY_ABS = parseAbsDay(getTodayDateStr());
   let overdue = 0;
   MAINT_RECORDS.forEach(mr=>{
@@ -1396,7 +1398,6 @@ function updateInsightPanel(page){
   `;
 }
 
-// syncStatus 업데이트
 function updateSyncStatus(status){
   const el=document.getElementById('syncStatus');
   if(!el)return;
@@ -1411,7 +1412,6 @@ function updateSyncStatus(status){
   }
 }
 
-// ══ 연도 동적 감지 ══
 function getAllYears(){
   const ySet = new Set();
   RECORDS.forEach(r=>{
@@ -1437,7 +1437,6 @@ function buildYearTabs(containerId, currentYr, onClickFn){
     + years.map(y=>`<button class="detail-tab ${currentYr===y?'on':''}" data-yr="${y}" onclick="${onClickFn}(this)" style="${currentYr===y?'background:#1C2B4A;border-color:#1C2B4A;color:#fff':''}">${y}년</button>`).join('');
 }
 
-// ══ 타임라인 빌더 ══
 let currentTimelineYear='all';
 
 function buildTimeline(yr){
@@ -1507,7 +1506,6 @@ function switchTimelineTab(btn){
   buildTimeline(btn.dataset.yr);
 }
 
-// ══ HBar 빌더 (연도 필터) ══
 function buildHBar(yr){
   const EQUIPS = getEquipNames();
 
@@ -1565,7 +1563,6 @@ function buildHBar(yr){
   });
 }
 
-// hbar 탭 전환
 let currentHBarYear='all';
 function switchHBarTab(btn){
   document.querySelectorAll('#hbarTabs .detail-tab').forEach(b=>{
@@ -1578,9 +1575,6 @@ function switchHBarTab(btn){
   buildHBar(btn.dataset.yr);
 }
 
-// ══════════════════════════════════════════════
-// ③ 종합 분석 로직
-// ══════════════════════════════════════════════
 let bubbleChart=null, timelineChart=null;
 
 function parseYM(dateStr){
@@ -1686,7 +1680,6 @@ function renderAnalysis(){
   renderEffectTable(currentEffectMode);
 }
 
-// ══ 보수 효과 분석 ══
 let _effectRows = [];
 let currentEffectMode = 'ratio';
 
@@ -1868,7 +1861,6 @@ function selectEffectEquip(name){
   renderEffectTable('byEquip');
 }
 
-// ══ 설비 상세 분석 팝업 ══
 let detailBdChart=null, detailMtChart=null;
 
 function openAnalysisDetail(name){
@@ -1964,7 +1956,6 @@ function openAnalysisDetail(name){
   openModal('modalDetail');
 }
 
-// ══ 설비 추가 모달 ══
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
@@ -2006,7 +1997,6 @@ function addMaintEquip(){
   syncAllTabs();
 }
 
-// ══ 보수이력 차트 ══
 let maintChart=null;
 
 function renderMaintChart(){
@@ -2070,7 +2060,6 @@ window.addEventListener('click',e=>{
   document.querySelectorAll('.modal-overlay').forEach(el=>{if(e.target===el)el.classList.remove('open');});
 });
 
-// ══ 컬럼 헤더 편집 ══
 function editColHeader(th, idx){
   const current = MAINT_COL_HEADERS[idx];
   const input = document.createElement('input');
@@ -2092,7 +2081,6 @@ function editColHeader(th, idx){
   });
 }
 
-// ══ 우클릭 컨텍스트 메뉴 ══
 let ctxType=null, ctxTarget=null;
 const PROTECTED_BDONG=['설비별 최대 원인','전체 설비'];
 
@@ -2153,7 +2141,6 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape') document.getElementById('ctxMenu')?.classList.remove('open');
 });
 
-// ══ 초기화 ══
 loadSavedData();
 buildSubTabs();
 renderView('설비별 최대 원인');
@@ -2189,8 +2176,8 @@ updateInsightPanel('bdong');
   </div>
 </div>
 
-<!-- ══ 로그인 / 회원가입 오버레이 ══ -->
-<div id="authOverlay" style="position:fixed;inset:0;background:rgba(28,43,74,0.95);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;">
+<!-- ══ 로그인 / 회원가입 오버레이 (100% 불투명 단색 배경 적용) ══ -->
+<div id="authOverlay" style="position:fixed;inset:0;background:#1C2B4A;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;">
   <div style="background:#fff;border-radius:16px;padding:32px;width:380px;max-width:90vw;box-shadow:0 12px 32px rgba(0,0,0,0.3);">
     <div style="text-align:center;margin-bottom:24px;">
       <h2 style="font-size:20px;font-weight:700;color:#1C2B4A;margin-bottom:6px;">선광 설비 관리 시스템</h2>
@@ -2211,7 +2198,13 @@ updateInsightPanel('bdong');
         <input type="password" id="authPw" placeholder="••••••••" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:12px;">
+      <!-- 이메일 저장 체크박스 추가 -->
+      <div style="display:flex;align-items:center;gap:6px;margin-top:-2px;">
+        <input type="checkbox" id="rememberEmail" style="cursor:pointer;width:14px;height:14px;accent-color:#1C2B4A;">
+        <label for="rememberEmail" style="font-size:12px;color:#475569;cursor:pointer;user-select:none;">이메일 저장</label>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;">
         <button onclick="handleLogin()" style="flex:1;padding:12px;background:#1C2B4A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">로그인</button>
         <button onclick="handleSignUp()" style="flex:1;padding:12px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">회원가입 신청</button>
       </div>
