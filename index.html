@@ -5,15 +5,109 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>선광 설비 관리 통합</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-  import { getAuth, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { 
+    getAuth, 
+    setPersistence, 
+    browserSessionPersistence, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    signOut, 
+    onAuthStateChanged 
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// ... [중략] ...
+  const firebaseConfig = {
+    apiKey: "AIzaSyCHWtPG64bUCx8wYQun767naxzQ2P46tS8",
+    authDomain: "maintenance-4b9ad.firebaseapp.com",
+    databaseURL: "https://maintenance-4b9ad-default-rtdb.firebaseio.com",
+    projectId: "maintenance-4b9ad",
+    storageBucket: "maintenance-4b9ad.firebasestorage.app",
+    messagingSenderId: "422302109224",
+    appId: "1:422302109224:web:3671635a80edfe69032f1d"
+  };
 
-const auth = getAuth(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
 
-// 탭/브라우저를 닫으면 로그인 상태가 자동으로 삭제되도록 설정
-setPersistence(auth, browserSessionPersistence);
-<script type="module">
+  // 🔑 탭/브라우저를 닫으면 로그인 상태가 자동으로 해제되도록 설정
+  setPersistence(auth, browserSessionPersistence);
+
+  window.firebaseDB = db;
+  window.firebaseRef = ref;
+  window.firebaseSet = set;
+  window.firebaseOnValue = onValue;
+  window.firebaseAuth = auth;
+
+  // ── 로그인 상태 변화 감지 ──
+  onAuthStateChanged(auth, async (user) => {
+    const authOverlay = document.getElementById('authOverlay');
+    if (user) {
+      const userRef = ref(db, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+      const userData = snapshot.val();
+
+      if (userData && userData.approved === true) {
+        if(authOverlay) authOverlay.style.display = 'none';
+        window._firebaseReady = true;
+        window.dispatchEvent(new Event('firebaseReady'));
+      } else {
+        alert('관리자 승인 대기 중입니다. 관리자가 승인한 후 이용 가능합니다.');
+        await signOut(auth);
+        if(authOverlay) authOverlay.style.display = 'flex';
+      }
+    } else {
+      if(authOverlay) authOverlay.style.display = 'flex';
+    }
+  });
+
+  // ── 회원가입 함수 ──
+  window.handleSignUp = async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const pw = document.getElementById('authPw').value.trim();
+    const name = document.getElementById('authName').value.trim();
+
+    if (!email || !pw || !name) { alert('이름, 이메일, 비밀번호를 모두 입력해 주세요.'); return; }
+
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, pw);
+      await set(ref(db, `users/${res.user.uid}`), {
+        name: name,
+        email: email,
+        approved: false,
+        createdAt: new Date().toISOString()
+      });
+      alert('회원가입이 완료되었습니다!\n관리자의 승인 후 로그인이 가능합니다.');
+      await signOut(auth);
+    } catch (err) {
+      alert('회원가입 실패: ' + err.message);
+    }
+  };
+
+  // ── 로그인 함수 ──
+  window.handleLogin = async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const pw = document.getElementById('authPw').value.trim();
+
+    if (!email || !pw) { alert('이메일과 비밀번호를 입력해 주세요.'); return; }
+
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch (err) {
+      alert('로그인 실패: 이메일 또는 비밀번호를 확인해 주세요.');
+    }
+  };
+
+  // ── 로그아웃 함수 ──
+  window.handleLogout = async () => {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      await signOut(auth);
+      location.reload();
+    }
+  };
+</script>
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   const firebaseConfig = {
